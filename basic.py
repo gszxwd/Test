@@ -19,7 +19,7 @@ def basic_seg(filename):
         for i in range(len(bins)):
             if x==-1 and bins[i] > 0:
                 x = i-1
-            if x!=-1 and y==-1 and bins[i]==0:
+            if x!=-1 and y==-1 and bins[i]<1e-10:
                 y = i
                 ret.append([x,y])
                 x = y = -1
