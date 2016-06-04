@@ -59,14 +59,14 @@ def basic_seg(filename):
     imgs, regions = get_seg_images(thresh, yslices)
 
     # save the segmented images
-    # for i in range(len(imgs)):
-    #     new_filename = filename.split(".")[0]+"-part-"+str(i+1)+"."+filename.split(".")[1]
-    #     cv2.imwrite(new_filename, 255-imgs[i])
+    for i in range(len(imgs)):
+        new_filename = filename.split(".")[0]+"-part-"+str(i+1)+"."+filename.split(".")[1]
+        cv2.imwrite(new_filename, 255-imgs[i])
 
     # save the regions
-    f = open("region.txt", "a")
-    f.writelines(str(regions)+"\n")
-    f.close()
+    # f = open("region.txt", "a")
+    # f.writelines(str(regions)+"\n")
+    # f.close()
 
 import os
 dir = "1/"

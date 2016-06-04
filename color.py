@@ -3,6 +3,7 @@ __author__ = 'Xu'
 import cv2
 import numpy as np
 
+# segment the background
 filename = '1/1_229.jpg'
 img = cv2.imread(filename)
 img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -30,6 +31,7 @@ for i in range(ncol):
     b = color_mean(imgb[:,i])
     ybins.append([r,g,b])
 
+# segment symbols according the distance
 def get_yslices(bins):
     ret = []
     x = y = -1
@@ -50,15 +52,31 @@ for i in range(len(yslices)):
     samples = samples + range(yslices[i][0], yslices[i][1])
 
 # define customized distance
-def distance(v1, v2):
-    ret = sum(np.power(v1-v2, 2))
+def distance(v1, v2, i=0, j=0):
+    weights = 50
+    ret = sum(np.power(v1-v2, 2)) + weights*((i-j)**2)
     return ret
 
 # use the matrix to store the cluster info, first column save belongings, second column save distance
-clusters = np.mat(np.zeros((len(samples),2)))
+clusters = np.mat(np.ones((len(samples),2)))*-1
 
 # step1: init centroids (TODO: improve, e.g. use filtered color info)
-centroids = np.random.choice(samples, k, False)
+# method 1 (filtered color info, also determine the k value!)
+
+# method 2 (using percentile number)
+# centroids = []
+# for i in range(k):
+#     centroids.append(np.int(np.percentile(samples, (100)*(i+1)/(k+1))))
+# centroids = np.array(centroids)
+
+# method 3 (using distance segmentation result)
+# centroids = []
+# if len(yslices) >= k:
+#     for i in range(k):
+#         centroids.append((yslices[i][0]+yslices[i][1])/2)
+#     centroids = np.array(centroids)
+# else:
+#     centroids = np.random.choice(samples, k, False)
 
 clusterChanged = True
 while clusterChanged:
@@ -69,19 +87,28 @@ while clusterChanged:
         index = 0
         # step2: find the centroid which is closest
         for j in range(len(centroids)):
-            dist = distance(np.array(ybins[samples[i]]), np.array(ybins[centroids[j]]))
+            dist = distance(np.array(ybins[samples[i]]), np.array(ybins[centroids[j]]), samples[i], centroids[j])
             if dist < minDist:
                 minDist = dist
                 index = j
         # step3: update its cluster info
         if clusters[i,0] != index:
-            #clusterChanged = True
+            clusterChanged = True
             clusters[i,:] = index, minDist
     # step4: update centroids
     for j in range(len(centroids)):
         tmp = np.nonzero(clusters[:,0]==j)[0]
         pointsInCluster = np.array(samples)[tmp]
-        # TODO: centroids[j] = ???
+        centroids[j] = np.int(np.mean(pointsInCluster))
+
+# get the new segment
+seg = clusters[:,0].tolist()
+j = 0
+for i in range(len(seg)):
+    if seg[i][0] == j:
+        print i,samples[i]
+        j = j+1
+
 
 # test color distance function 1
 # img_part1 = img_new[33:44,15:30,:]
