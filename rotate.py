@@ -8,9 +8,11 @@ from pylab import *
 
 
 def getBinary(path):
- im=cv2.imread(path,0)
- thresh,im=cv2.threshold(255-im,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
- return im
+    im=cv2.imread(path,0)
+    thresh,im=cv2.threshold(255-im,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    return im
+
+# shadow min or boundary box min???
 
 def shadow(im,angel):
     x=[]
@@ -18,24 +20,21 @@ def shadow(im,angel):
     for i in xrange(height):
         for j in xrange(width):
             if im[i][j]==255:
-                x.append(j-1.0*i/math.tan(math.radians(angel)))
+                x.append(j*math.cos(math.radians(angel)) - i*math.sin(math.radians(angel)))
     x=np.array(x)
     return x.max()-x.min()
 
 def shadowTest():
     directory='weibo'
     pics=os.listdir(directory)
-    for pic in pics[:10]:
-        im=getBinary(os.path.join(directory,pic))
-        print shadow(im,50)
-        figure()
-        gray()
-        imshow(im)
+    pic = pics[0]
+    im=getBinary(os.path.join(directory,pic))
+    print shadow(im,30)
 
 def getAngle(im):
     minShadow=500
-    ans=90
-    for angle in np.linspace(45,135,91):
+    ans=0
+    for angle in np.linspace(-89,90,180):
         thisShadow=shadow(im,angle)
         if minShadow>thisShadow:
             ans=angle
@@ -48,8 +47,6 @@ def getAngleTest():
     for pic in pics[:5]:
         im=getBinary(os.path.join(directory,pic))
         print getAngle(im)
-        figure()
-        imshow(im)
 
 def affine(im):
     height,width=im.shape
@@ -60,15 +57,28 @@ def affine(im):
     dst=cv2.warpAffine(im,M,(width,height))
     return dst
 
-def affineTest():
-    directory='weibo'
-    pics=os.listdir(directory)
-    for pic in pics[:1]:
-        im=getBinary(os.path.join(directory,pic))
-        dst=affine(im)
-        gray()
-        figure()
-        imshow(np.hstack([im,dst]))
-        axis('off')
+# main
+directory='weibo'
+pics=os.listdir(directory)
+for pic in pics:
+    im = getBinary(os.path.join(directory,pic))
+    height, width = im.shape
+    angle = getAngle(im)
+    M = cv2.getRotationMatrix2D((width/2, height/2), angle, 1)
+    edge = max(height, width)
+    dst = cv2.warpAffine(im, M, (edge, edge))
+    newpic = 'rotate_'+pic
+    cv2.imwrite(os.path.join(directory, newpic), dst)
 
-affineTest()
+# single image test
+# gray()
+# imshow(np.hstack([im,dst]))
+pic = pics[6]
+im = getBinary(os.path.join(directory,pic))
+height, width = im.shape
+angle = getAngle(im)
+print angle
+M = cv2.getRotationMatrix2D((width/2, height/2), angle, 1)
+edge = max(height, width)
+dst = cv2.warpAffine(im, M, (edge, edge))
+imshow(dst)
